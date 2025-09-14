@@ -1,0 +1,74 @@
+/* VITAPULSE CLINICAL DESIGN SYSTEM - CORE RESET */
+:root {
+  --vp-medical-primary: #2E7D32 !important;
+  --vp-medical-primary-hover: #1B5E20 !important;
+  --vp-background-primary: #FFFFFF !important;
+  --vp-text-primary: #333333 !important;
+}
+
+*:not(script, head, style, html, meta, title, link) {
+  box-sizing: border-box !important;
+  font-family: 'Open Sans', sans-serif !important;
+}
+
+body, div, section, article, main, header, footer, [class*="container"], [class*="page"], [class*="section"] {
+  background-color: var(--vp-background-primary) !important;
+  color: var(--vp-text-primary) !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+h1, h2, h3, h4, h5, h6, [class*="heading"], [class*="title"] {
+  color: var(--vp-medical-primary) !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  margin: 8px 0 !important;
+}
+
+p, span, li, td, label, [class*="text"], [class*="description"] {
+  color: var(--vp-text-primary) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  margin: 8px 0 !important;
+}
+
+a, [class*="button"], [class*="btn"], button, .button, .btn {
+  background: linear-gradient(180deg, var(--vp-medical-primary) 0%, var(--vp-medical-primary-hover) 100%) !important;
+  color: var(--vp-background-primary) !important;
+  padding: 12px 24px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  min-width: 120px !important;
+  margin: 8px 0 !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+a:hover, a:focus, [class*="button"]:hover, [class*="button"]:focus, [class*="btn"]:hover, [class*="btn"]:focus, button:hover, button:focus {
+  background: linear-gradient(180deg, var(--vp-medical-primary-hover) 0%, var(--vp-medical-primary) 100%) !important;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.card, [class*="card"] {
+  background: var(--vp-background-primary) !important;
+  border: 1px solid var(--vp-medical-primary) !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+  margin: 8px 0 !important;
+}
+
+@media (min-width: 768px) {
+  .container { padding: 16px !important; }
+  [class*="button"], [class*="btn"], button { min-width: 140px !important; }
+}

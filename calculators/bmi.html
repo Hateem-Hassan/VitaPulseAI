@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator - VitaPulse</title>
+    <link rel="stylesheet" href="/assets/css/vitapulse-clinical.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+</head>
+<body>
+    <div class="container">
+        <h1>BMI Calculator</h1>
+        <div class="card">
+            <form id="bmiForm">
+                <label for="weight">Weight (kg):</label>
+                <input type="number" id="weight" step="0.1" required>
+                
+                <label for="height">Height (cm):</label>
+                <input type="number" id="height" step="0.1" required>
+                
+                <button type="submit">Calculate BMI</button>
+            </form>
+            
+            <div id="result" style="display: none;">
+                <h3>Your BMI: <span id="bmiValue"></span></h3>
+                <p id="bmiCategory"></p>
+                <p id="bmiInterpretation"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('bmiForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value) / 100; // Convert cm to m
+            
+            if (weight && height) {
+                const bmi = weight / (height * height);
+                const category = getBMICategory(bmi);
+                const interpretation = getBMIIterpretation(bmi);
+                
+                document.getElementById('bmiValue').textContent = bmi.toFixed(1);
+                document.getElementById('bmiCategory').textContent = category;
+                document.getElementById('bmiInterpretation').textContent = interpretation;
+                document.getElementById('result').style.display = 'block';
+            }
+        });
+        
+        function getBMICategory(bmi) {
+            if (bmi < 18.5) return 'Underweight';
+            if (bmi < 25) return 'Normal weight';
+            if (bmi < 30) return 'Overweight';
+            return 'Obese';
+        }
+        
+        function getBMIIterpretation(bmi) {
+            if (bmi < 18.5) return 'You may need to gain weight. Consult a healthcare provider.';
+            if (bmi < 25) return 'Your weight is in the healthy range.';
+            if (bmi < 30) return 'Consider lifestyle changes to reach a healthier weight.';
+            return 'Consult a healthcare provider for weight management guidance.';
+        }
+    </script>
+</body>
+</html>
