@@ -1,10 +1,7 @@
-'use client';
-
 import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '../ui/button';
 import { 
   Menu, 
   X
@@ -12,19 +9,20 @@ import {
 
 export default function Header() {
   const { user, signOut } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Calculators', href: '/health-calculators' },
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Health Calculators', href: '/health-calculators' },
     { name: 'Food Logger', href: '/food-logger' },
-    { name: 'MedEd', href: '/meded' }
+    { name: 'AI Symptom Checker', href: '/ai-symptom-checker' }
   ];
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/');
+      navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -40,7 +38,7 @@ export default function Header() {
       borderBottom: '1px solid #f5f7fa'
     }}>
       {/* Logo */}
-      <Link href="/" style={{
+      <Link to="/" style={{
         fontSize: '1.8rem',
         fontWeight: '700',
         color: '#3A7BED',
@@ -53,16 +51,16 @@ export default function Header() {
       <nav className="hidden md:flex">
         {navigation.map((item) => (
           <Link
-            key={item.name}
-            href={item.href}
-            style={{
-              margin: '0 1rem',
-              textDecoration: 'none',
-              color: '#333'
-            }}
-          >
-            {item.name}
-          </Link>
+              key={item.name}
+              to={item.href}
+              style={{
+                margin: '0 1rem',
+                textDecoration: 'none',
+                color: '#333'
+              }}
+            >
+              {item.name}
+            </Link>
         ))}
         {user ? (
           <button
@@ -82,18 +80,18 @@ export default function Header() {
           </button>
         ) : (
           <Link
-            href="/auth/signin"
-            style={{
-              marginLeft: '1.5rem',
-              textDecoration: 'none',
-              color: '#ffffff',
-              backgroundColor: '#4CAF50',
-              padding: '0.5rem 1.5rem',
-              borderRadius: '5px'
-            }}
-          >
-            Login
-          </Link>
+                to="/auth"
+                style={{
+                  marginLeft: '1.5rem',
+                  textDecoration: 'none',
+                  color: '#ffffff',
+                  backgroundColor: '#4CAF50',
+                  padding: '0.5rem 1.5rem',
+                  borderRadius: '5px'
+                }}
+              >
+                Login
+              </Link>
         )}
       </nav>
 
@@ -118,7 +116,7 @@ export default function Header() {
             {navigation.map((item) => (
               <Link
                 key={item.name}
-                href={item.href}
+                to={item.href}
                 className="block px-3 py-2 text-gray-700 hover:text-blue-600"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -137,7 +135,7 @@ export default function Header() {
               </button>
             ) : (
               <Link
-                href="/auth/signin"
+                to="/auth"
                 className="block px-3 py-2 text-green-600 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >

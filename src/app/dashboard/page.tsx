@@ -1,468 +1,514 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  Target, 
-  Award, 
-  Zap,
-  Calendar,
+// Main Dashboard Page with Health Analytics and Quick Actions
+// Comprehensive health overview with charts, metrics, and AI insights
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
   Activity,
   Heart,
+  Scale,
+  Utensils,
   Brain,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  Bell,
+  Target,
+  Award,
+  Clock,
+  AlertCircle,
+  ChevronRight,
+  Zap,
   Droplets,
-  Footprints,
   Moon,
-  Smile
+  Sun
 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { toast } from 'sonner';
 
-interface Meal {
+interface HealthMetric {
   id: string;
   name: string;
-  type: string;
-  calories: number;
-  time: string;
+  value: number;
+  unit: string;
+  target?: number;
+  trend: 'up' | 'down' | 'stable';
+  trendValue: number;
+  icon: React.ReactNode;
+  color: string;
+  lastUpdated: string;
 }
 
-interface Recommendation {
+interface QuickAction {
   id: string;
-  type: string;
   title: string;
   description: string;
-  priority: 'low' | 'medium' | 'high';
+  icon: React.ReactNode;
+  href: string;
+  color: string;
+  badge?: string;
 }
 
-interface Goal {
+interface HealthInsight {
   id: string;
+  type: 'tip' | 'warning' | 'achievement' | 'reminder';
   title: string;
-  progress: number;
-  target: number;
-  current: number;
-  unit: string;
-}
-
-interface Activity {
-  id: string;
-  type: string;
   message: string;
+  action?: {
+    label: string;
+    href: string;
+  };
   timestamp: string;
 }
 
-interface DashboardData {
-  stats: {
-    caloriesConsumed: number;
-    caloriesBurned: number;
-    waterIntake: number;
-    steps: number;
-    sleepHours: number;
-    moodScore: number;
-    energyLevel: number;
-    stressLevel: number;
-  };
-  recentMeals: Meal[];
-  recommendations: Recommendation[];
-  goals: Goal[];
-  activities: Activity[];
-}
-
-// Simple Loading Spinner Component
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-  </div>
-);
-
-// Simple Stats Card Component
-const StatsCard = ({ title, value, icon: Icon, color }: { title: string; value: string | number; icon: any; color: string }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      </div>
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
-      </div>
-    </div>
-  </div>
-);
-
-// Simple Meal Card Component
-const MealCard = ({ meal }: { meal: Meal }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-    <div className="flex justify-between items-start">
-      <div>
-        <h3 className="font-semibold text-gray-900 dark:text-white">{meal.name}</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{meal.type}</p>
-        <p className="text-sm text-gray-500 dark:text-gray-500">{meal.time}</p>
-      </div>
-      <span className="text-sm font-medium text-blue-600">{meal.calories} cal</span>
-    </div>
-  </div>
-);
-
-// Simple Recommendation Card Component
-const RecommendationCard = ({ recommendation }: { recommendation: Recommendation }) => {
-  const priorityColors = {
-    low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-    high: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-semibold text-gray-900 dark:text-white">{recommendation.title}</h3>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[recommendation.priority]}`}>
-          {recommendation.priority}
-        </span>
-      </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{recommendation.description}</p>
-    </div>
-  );
-};
-
-// Simple Goal Progress Component
-const GoalCard = ({ goal }: { goal: Goal }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-    <div className="flex justify-between items-center mb-2">
-      <h3 className="font-semibold text-gray-900 dark:text-white">{goal.title}</h3>
-      <span className="text-sm text-gray-600 dark:text-gray-400">{goal.progress}%</span>
-    </div>
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-      <div 
-        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-        style={{ width: `${goal.progress}%` }}
-      ></div>
-    </div>
-    <p className="text-sm text-gray-600 dark:text-gray-400">
-      {goal.current} / {goal.target} {goal.unit}
-    </p>
-  </div>
-);
-
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState<DashboardData>({
-    stats: {
-      caloriesConsumed: 0,
-      caloriesBurned: 0,
-      waterIntake: 0,
-      steps: 0,
-      sleepHours: 0,
-      moodScore: 0,
-      energyLevel: 0,
-      stressLevel: 0,
-    },
-    recentMeals: [],
-    recommendations: [],
-    goals: [],
-    activities: [],
-  });
-
-  // Allow access without mandatory signin - show limited features for non-authenticated users
-  const isAuthenticated = !!user;
-
+  const router = useRouter();
+  const { user, userProfile, loading } = useAuth();
+  const { isDark } = useTheme();
+  
+  const [healthMetrics, setHealthMetrics] = useState<HealthMetric[]>([]);
+  const [insights, setInsights] = useState<HealthInsight[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Redirect if not authenticated
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (!loading && !user) {
+      router.push('/auth/signin');
+    }
+  }, [user, loading, router]);
+
+  // Load dashboard data
+  useEffect(() => {
+    if (user && userProfile) {
+      loadDashboardData();
+    }
+  }, [user, userProfile]);
 
   const loadDashboardData = async () => {
-    // Simulate API call
-    setTimeout(() => {
-      setDashboardData({
-        stats: {
-          caloriesConsumed: 1850,
-          caloriesBurned: 450,
-          waterIntake: 6,
-          steps: 8500,
-          sleepHours: 7.5,
-          moodScore: 8,
-          energyLevel: 7,
-          stressLevel: 3,
+    try {
+      setIsLoading(true);
+      
+      // Mock health metrics data
+      const mockMetrics: HealthMetric[] = [
+        {
+          id: 'weight',
+          name: 'Weight',
+          value: 72.5,
+          unit: 'kg',
+          target: 70,
+          trend: 'down',
+          trendValue: -0.8,
+          icon: <Scale className="h-5 w-5" />,
+          color: 'text-blue-600',
+          lastUpdated: '2 hours ago'
         },
-        recentMeals: [
-          {
-            id: '1',
-            name: 'Grilled Chicken Salad',
-            type: 'lunch',
-            calories: 350,
-            time: '12:30 PM'
+        {
+          id: 'steps',
+          name: 'Steps Today',
+          value: 8420,
+          unit: 'steps',
+          target: 10000,
+          trend: 'up',
+          trendValue: 12,
+          icon: <Activity className="h-5 w-5" />,
+          color: 'text-green-600',
+          lastUpdated: '5 min ago'
+        },
+        {
+          id: 'heart_rate',
+          name: 'Resting HR',
+          value: 68,
+          unit: 'bpm',
+          target: 65,
+          trend: 'stable',
+          trendValue: 0,
+          icon: <Heart className="h-5 w-5" />,
+          color: 'text-red-600',
+          lastUpdated: '1 hour ago'
+        },
+        {
+          id: 'calories',
+          name: 'Calories',
+          value: 1850,
+          unit: 'kcal',
+          target: 2200,
+          trend: 'up',
+          trendValue: 5,
+          icon: <Utensils className="h-5 w-5" />,
+          color: 'text-orange-600',
+          lastUpdated: '30 min ago'
+        },
+        {
+          id: 'water',
+          name: 'Water Intake',
+          value: 1.8,
+          unit: 'L',
+          target: 2.5,
+          trend: 'up',
+          trendValue: 8,
+          icon: <Droplets className="h-5 w-5" />,
+          color: 'text-cyan-600',
+          lastUpdated: '15 min ago'
+        },
+        {
+          id: 'sleep',
+          name: 'Sleep',
+          value: 7.2,
+          unit: 'hours',
+          target: 8,
+          trend: 'down',
+          trendValue: -5,
+          icon: <Moon className="h-5 w-5" />,
+          color: 'text-purple-600',
+          lastUpdated: 'This morning'
+        }
+      ];
+      
+      // Mock insights data
+      const mockInsights: HealthInsight[] = [
+        {
+          id: '1',
+          type: 'achievement',
+          title: 'Weekly Goal Achieved!',
+          message: 'You\'ve completed 5 out of 7 workout sessions this week. Great job!',
+          action: {
+            label: 'View Progress',
+            href: '/fitness/progress'
           },
-          {
-            id: '2',
-            name: 'Greek Yogurt with Berries',
-            type: 'snack',
-            calories: 150,
-            time: '3:00 PM'
-          }
-        ],
-        recommendations: [
-          {
-            id: '1',
-            type: 'nutrition',
-            title: 'Increase Protein Intake',
-            description: 'Consider adding more lean protein to your meals',
-            priority: 'medium'
+          timestamp: '2 hours ago'
+        },
+        {
+          id: '2',
+          type: 'tip',
+          title: 'Hydration Reminder',
+          message: 'You\'re 28% behind your daily water intake goal. Consider drinking a glass now.',
+          action: {
+            label: 'Log Water',
+            href: '/nutrition/water'
           },
-          {
-            id: '2',
-            type: 'exercise',
-            title: 'Cardio Workout',
-            description: 'You haven\'t done cardio in 3 days',
-            priority: 'high'
-          }
-        ],
-        goals: [
-          {
-            id: '1',
-            title: 'Daily Steps',
-            progress: 85,
-            target: 10000,
-            current: 8500,
-            unit: 'steps'
+          timestamp: '1 hour ago'
+        },
+        {
+          id: '3',
+          type: 'warning',
+          title: 'Sleep Pattern Alert',
+          message: 'Your sleep duration has decreased by 15% this week. Consider improving your sleep hygiene.',
+          action: {
+            label: 'Sleep Tips',
+            href: '/health/sleep-tips'
           },
-          {
-            id: '2',
-            title: 'Water Intake',
-            progress: 75,
-            target: 8,
-            current: 6,
-            unit: 'glasses'
-          }
-        ],
-        activities: [
-          {
-            id: '1',
-            type: 'achievement',
-            message: 'Completed BMI Calculator',
-            timestamp: '2 hours ago'
-          },
-          {
-            id: '2',
-            type: 'meal',
-            message: 'Logged lunch: Grilled Chicken Salad',
-            timestamp: '4 hours ago'
-          }
-        ]
-      });
-    }, 1000);
+          timestamp: '6 hours ago'
+        }
+      ];
+      
+      setHealthMetrics(mockMetrics);
+      setInsights(mockInsights);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (loading) {
+  const quickActions: QuickAction[] = [
+    {
+      id: 'symptom_checker',
+      title: 'AI Symptom Checker',
+      description: 'Get instant health insights',
+      icon: <Brain className="h-6 w-6" />,
+      href: '/health/symptom-checker',
+      color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+      badge: 'AI'
+    },
+    {
+      id: 'meal_planner',
+      title: 'AI Meal Planner',
+      description: 'Personalized nutrition plans',
+      icon: <Utensils className="h-6 w-6" />,
+      href: '/nutrition/meal-planner',
+      color: 'bg-gradient-to-br from-green-500 to-green-600',
+      badge: 'New'
+    },
+    {
+      id: 'food_logger',
+      title: 'Food Logger',
+      description: 'Track your daily nutrition',
+      icon: <Plus className="h-6 w-6" />,
+      href: '/nutrition/food-logger',
+      color: 'bg-gradient-to-br from-orange-500 to-orange-600'
+    },
+    {
+      id: 'health_calculators',
+      title: 'Health Calculators',
+      description: 'BMI, TDEE, and more',
+      icon: <Target className="h-6 w-6" />,
+      href: '/health/calculators',
+      color: 'bg-gradient-to-br from-blue-500 to-blue-600'
+    }
+  ];
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'up':
+        return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'down':
+        return <TrendingDown className="h-4 w-4 text-red-600" />;
+      default:
+        return <div className="h-4 w-4 rounded-full bg-neutral-400" />;
+    }
+  };
+
+  const getInsightIcon = (type: string) => {
+    switch (type) {
+      case 'achievement':
+        return <Award className="h-5 w-5 text-yellow-600" />;
+      case 'warning':
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
+      case 'reminder':
+        return <Bell className="h-5 w-5 text-blue-600" />;
+      default:
+        return <Zap className="h-5 w-5 text-green-600" />;
+    }
+  };
+
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Simple sidebar - only show for authenticated users */}
-      {isAuthenticated && (
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">VitaPulse</h2>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <nav className="p-4">
-            <ul className="space-y-2">
-              <li><a href="/dashboard" className="block p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Dashboard</a></li>
-              <li><a href="/calculators" className="block p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Calculators</a></li>
-              <li><a href="/profile" className="block p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Profile</a></li>
-            </ul>
-          </nav>
-        </div>
-      )}
-      
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className={isAuthenticated ? "lg:pl-64" : ""}>
-        {/* Simple header for both authenticated and guest users */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between px-6 py-4">
-            {isAuthenticated && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            )}
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">VitaPulse Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Welcome, {user?.email?.split('@')[0]}</span>
-                  <button className="text-sm text-blue-600 hover:text-blue-800">Sign Out</button>
-                </div>
-              ) : (
-                <a href="/auth/signin" className="text-sm text-blue-600 hover:text-blue-800">Sign In</a>
-              )}
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+                Welcome back, {userProfile?.first_name || 'User'}!
+              </h1>
+              <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                Here's your health overview for today
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button variant="outline" size="sm">
+                <Calendar className="h-4 w-4 mr-2" />
+                Today
+              </Button>
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </header>
+        </div>
 
-        <main className="p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Welcome Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome{isAuthenticated ? ` back, ${user?.email?.split('@')[0]}` : ' to VitaPulse'}! 👋
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {isAuthenticated ? "Here's your health overview for today" : "Explore health tools and calculators - sign in for personalized features"}
-              </p>
-            </motion.div>
-
-            {/* Guest User CTA */}
-            {!isAuthenticated && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white text-center"
-              >
-                <h2 className="text-2xl font-bold mb-2">Unlock Your Full Potential</h2>
-                <p className="mb-4">Sign in with Google to track progress, earn points, and get personalized recommendations</p>
-                <a href="/auth/signin" className="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                  Sign In with Google
-                </a>
-              </motion.div>
-            )}
-
-            {/* Quick Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Health Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatsCard 
-                  title="Calories Consumed" 
-                  value={dashboardData.stats.caloriesConsumed} 
-                  icon={TrendingUp} 
-                  color="bg-blue-500" 
-                />
-                <StatsCard 
-                  title="Steps Today" 
-                  value={dashboardData.stats.steps.toLocaleString()} 
-                  icon={Footprints} 
-                  color="bg-green-500" 
-                />
-                <StatsCard 
-                  title="Water Intake" 
-                  value={`${dashboardData.stats.waterIntake}/8`} 
-                  icon={Droplets} 
-                  color="bg-cyan-500" 
-                />
-                <StatsCard 
-                  title="Sleep Hours" 
-                  value={`${dashboardData.stats.sleepHours}h`} 
-                  icon={Moon} 
-                  color="bg-purple-500" 
-                />
-              </div>
-            </motion.div>
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Recent Meals */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                >
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recent Meals</h2>
-                  <div className="space-y-3">
-                    {dashboardData.recentMeals.map((meal) => (
-                      <MealCard key={meal.id} meal={meal} />
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Goals Progress */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 }}
-                >
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Goals Progress</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {dashboardData.goals.map((goal) => (
-                      <GoalCard key={goal.id} goal={goal} />
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-6">
-                {/* AI Recommendations */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.7 }}
-                >
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recommendations</h2>
-                  <div className="space-y-3">
-                    {dashboardData.recommendations.map((recommendation) => (
-                      <RecommendationCard key={recommendation.id} recommendation={recommendation} />
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Activity Feed */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.9 }}
-                >
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="space-y-3">
-                      {dashboardData.activities.map((activity) => (
-                        <div key={activity.id} className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{activity.timestamp}</p>
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {quickActions.map((action) => (
+              <Link key={action.id} href={action.href}>
+                <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-0 overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className={`${action.color} p-6 text-white relative`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          {action.icon}
+                          <div>
+                            <h3 className="font-semibold text-sm">{action.title}</h3>
+                            <p className="text-xs opacity-90">{action.description}</p>
                           </div>
                         </div>
-                      ))}
+                        {action.badge && (
+                          <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                            {action.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <ChevronRight className="absolute bottom-4 right-4 h-4 w-4 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  </div>
-                </motion.div>
-              </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Health Metrics */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                Health Metrics
+              </h2>
+              <Link href="/health/metrics">
+                <Button variant="outline" size="sm">
+                  View All
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {healthMetrics.map((metric) => (
+                <Card key={metric.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={metric.color}>
+                          {metric.icon}
+                        </div>
+                        <CardTitle className="text-sm font-medium">
+                          {metric.name}
+                        </CardTitle>
+                      </div>
+                      {getTrendIcon(metric.trend)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-baseline space-x-2">
+                        <span className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+                          {metric.value.toLocaleString()}
+                        </span>
+                        <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                          {metric.unit}
+                        </span>
+                      </div>
+                      
+                      {metric.target && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <span>Progress</span>
+                            <span>{Math.round((metric.value / metric.target) * 100)}%</span>
+                          </div>
+                          <Progress 
+                            value={(metric.value / metric.target) * 100} 
+                            className="h-2"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-neutral-500 dark:text-neutral-400">
+                          {metric.lastUpdated}
+                        </span>
+                        {metric.trendValue !== 0 && (
+                          <span className={`font-medium ${
+                            metric.trend === 'up' ? 'text-green-600' : 
+                            metric.trend === 'down' ? 'text-red-600' : 'text-neutral-600'
+                          }`}>
+                            {metric.trend === 'up' ? '+' : ''}{metric.trendValue}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
-        </main>
+
+          {/* Insights & Notifications */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                Health Insights
+              </h2>
+              <Link href="/health/insights">
+                <Button variant="outline" size="sm">
+                  View All
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="space-y-4">
+              {insights.map((insight) => (
+                <Card key={insight.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {getInsightIcon(insight.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                          {insight.title}
+                        </h3>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                          {insight.message}
+                        </p>
+                        <div className="flex items-center justify-between mt-3">
+                          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {insight.timestamp}
+                          </span>
+                          {insight.action && (
+                            <Link href={insight.action.href}>
+                              <Button variant="ghost" size="sm" className="text-xs h-7">
+                                {insight.action.label}
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Today's Goals */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <Target className="h-5 w-5 mr-2 text-primary-600" />
+                  Today's Goals
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">Steps</span>
+                    <span className="text-sm font-medium">8,420 / 10,000</span>
+                  </div>
+                  <Progress value={84.2} className="h-2" />
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">Water</span>
+                    <span className="text-sm font-medium">1.8L / 2.5L</span>
+                  </div>
+                  <Progress value={72} className="h-2" />
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-neutral-600 dark:text-neutral-400">Calories</span>
+                    <span className="text-sm font-medium">1,850 / 2,200</span>
+                  </div>
+                  <Progress value={84.1} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

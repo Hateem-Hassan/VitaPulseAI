@@ -1,203 +1,175 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Star, 
-  Quote,
-  Heart,
-  TrendingUp,
-  Target,
-  Zap
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Card } from '@/components/ui/card';
+import { Star } from 'lucide-react';
+import Image from 'next/image';
 
-const testimonials = [
+interface Testimonial {
+  id: number;
+  name: string;
+  location: string;
+  rating: number;
+  text: string;
+  language: string;
+  avatar: string;
+  profession: string;
+}
+
+const testimonials: Testimonial[] = [
   {
-    name: 'Sarah Johnson',
-    role: 'Fitness Enthusiast',
-    avatar: '👩‍💼',
+    id: 1,
+    name: "Sarah Johnson",
+    location: "New York, USA",
     rating: 5,
-    content: 'VitaPulse has completely transformed my approach to health and nutrition. The AI meal planning is incredibly accurate and the community support is amazing!',
-    results: 'Lost 25 lbs in 3 months',
-    icon: Target,
-    color: 'text-green-500',
+    text: "VitaPulse has completely transformed my approach to health and wellness. The AI-powered recommendations are incredibly accurate and personalized. I've lost 15 pounds and feel more energetic than ever!",
+    language: "English",
+    avatar: "https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%20smiling%20woman%20with%20blonde%20hair%20in%20business%20attire%20against%20clean%20background&image_size=square",
+    profession: "Marketing Manager"
   },
   {
-    name: 'Michael Chen',
-    role: 'Software Engineer',
-    avatar: '👨‍💻',
+    id: 2,
+    name: "Carlos Mendoza",
+    location: "Madrid, España",
     rating: 5,
-    content: 'As someone who works long hours, VitaPulse has been a game-changer. The smart food logging and wearable integration make it so easy to stay on track.',
-    results: 'Improved energy levels by 40%',
-    icon: Zap,
-    color: 'text-blue-500',
+    text: "¡Increíble plataforma! Los calculadores de salud son muy precisos y la función de seguimiento de comidas me ha ayudado a mantener una dieta equilibrada. Recomiendo VitaPulse a todos mis amigos.",
+    language: "Español",
+    avatar: "https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%20smiling%20hispanic%20man%20with%20dark%20hair%20in%20casual%20shirt%20against%20clean%20background&image_size=square",
+    profession: "Fitness Trainer"
   },
   {
-    name: 'Dr. Emily Rodriguez',
-    role: 'Nutritionist',
-    avatar: '👩‍⚕️',
+    id: 3,
+    name: "Marie Dubois",
+    location: "Paris, France",
     rating: 5,
-    content: 'I recommend VitaPulse to all my clients. The health calculators are incredibly accurate and the AI recommendations are evidence-based. It\'s like having a personal health coach.',
-    results: 'Helped 200+ clients achieve goals',
-    icon: Heart,
-    color: 'text-red-500',
+    text: "Une application fantastique ! J'adore les fonctionnalités de gamification qui me motivent à atteindre mes objectifs de santé. L'interface est intuitive et les conseils nutritionnels sont excellents.",
+    language: "Français",
+    avatar: "https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%20smiling%20french%20woman%20with%20brown%20hair%20in%20elegant%20blouse%20against%20clean%20background&image_size=square",
+    profession: "Nutritionist"
   },
   {
-    name: 'James Wilson',
-    role: 'Personal Trainer',
-    avatar: '👨‍🏋️',
+    id: 4,
+    name: "Hans Mueller",
+    location: "Berlin, Deutschland",
     rating: 5,
-    content: 'The analytics and progress tracking features are outstanding. I can see exactly how my clients are progressing and adjust their plans accordingly.',
-    results: 'Increased client retention by 60%',
-    icon: TrendingUp,
-    color: 'text-purple-500',
+    text: "VitaPulse ist die beste Gesundheits-App, die ich je verwendet habe. Die medizinischen Rechner sind sehr genau und die KI-gestützten Empfehlungen haben mir geholfen, meine Fitnessziele zu erreichen.",
+    language: "Deutsch",
+    avatar: "https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%20smiling%20german%20man%20with%20light%20hair%20wearing%20glasses%20in%20button%20shirt%20against%20clean%20background&image_size=square",
+    profession: "Software Engineer"
   },
   {
-    name: 'Lisa Park',
-    role: 'Busy Mom',
-    avatar: '👩‍👧‍👦',
+    id: 5,
+    name: "田中健太",
+    location: "Tokyo, Japan",
     rating: 5,
-    content: 'VitaPulse makes healthy eating so much easier for my family. The meal planning takes into account everyone\'s preferences and dietary restrictions.',
-    results: 'Family health improved significantly',
-    icon: Heart,
-    color: 'text-pink-500',
+    text: "VitaPulseは素晴らしいアプリです！健康計算機能が非常に正確で、食事記録機能も使いやすいです。AIコーチからのアドバイスのおかげで、健康的な生活習慣を身につけることができました。",
+    language: "日本語",
+    avatar: "https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%20smiling%20japanese%20man%20with%20black%20hair%20in%20business%20suit%20against%20clean%20background&image_size=square",
+    profession: "Doctor"
   },
   {
-    name: 'David Thompson',
-    role: 'Retiree',
-    avatar: '👨‍🦳',
+    id: 6,
+    name: "أحمد العلي",
+    location: "Dubai, UAE",
     rating: 5,
-    content: 'At 65, I thought it was too late to change my health habits. VitaPulse proved me wrong! The gentle approach and community support made all the difference.',
-    results: 'Reversed pre-diabetes',
-    icon: Target,
-    color: 'text-orange-500',
-  },
+    text: "تطبيق رائع جداً! لقد ساعدني VitaPulse في تحسين صحتي بشكل كبير. الحاسبات الطبية دقيقة جداً ونظام تتبع الطعام سهل الاستخدام. أنصح به بشدة لكل من يريد تحسين نمط حياته.",
+    language: "العربية",
+    avatar: "https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20headshot%20of%20a%20smiling%20middle%20eastern%20man%20with%20dark%20hair%20and%20beard%20in%20white%20shirt%20against%20clean%20background&image_size=square",
+    profession: "Business Consultant"
+  }
 ];
 
-const stats = [
-  { label: 'Happy Users', value: '50K+', icon: Heart },
-  { label: 'Meals Planned', value: '1M+', icon: Target },
-  { label: 'Success Rate', value: '95%', icon: TrendingUp },
-  { label: 'Countries', value: '50+', icon: Star },
-];
+const StarRating = ({ rating }: { rating: number }) => {
+  return (
+    <div className="flex items-center space-x-1">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="py-20 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl font-bold text-foreground mb-4">
-            What Our Users Say
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Trusted by Users Worldwide
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Join thousands of satisfied users who have transformed their health journey with VitaPulse
           </p>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16"
-        >
-          {stats.map((stat, index) => (
-            <div key={stat.label} className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900 dark:to-secondary-900 flex items-center justify-center">
-                <stat.icon className="w-8 h-8 text-primary-600" />
-              </div>
-              <div className="text-3xl font-bold text-foreground mb-2">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </div>
-          ))}
-        </motion.div>
+        </div>
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-            >
-              <Card className="h-full hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-6">
-                  {/* Quote Icon */}
-                  <div className="flex justify-start mb-4">
-                    <Quote className="w-8 h-8 text-muted-foreground/50" />
-                  </div>
+          {testimonials.map((testimonial) => (
+            <Card key={testimonial.id} className="p-6 hover:shadow-lg transition-shadow duration-300">
+              {/* Rating */}
+              <div className="mb-4">
+                <StarRating rating={testimonial.rating} />
+              </div>
 
-                  {/* Rating */}
-                  <div className="flex items-center space-x-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
-                    ))}
-                  </div>
+              {/* Testimonial Text */}
+              <blockquote className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+                "{testimonial.text}"
+              </blockquote>
 
-                  {/* Content */}
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    "{testimonial.content}"
-                  </p>
-
-                  {/* Results */}
-                  <div className="flex items-center space-x-2 mb-4 p-3 rounded-lg bg-gradient-to-r from-success-50 to-primary-50 dark:from-success-950 dark:to-primary-950">
-                    <testimonial.icon className={`w-5 h-5 ${testimonial.color}`} />
-                    <span className="text-sm font-medium text-foreground">
-                      {testimonial.results}
-                    </span>
+              {/* User Info */}
+              <div className="flex items-center space-x-4">
+                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                  <Image
+                    src={testimonial.avatar}
+                    alt={`${testimonial.name} profile`}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white">
+                    {testimonial.name}
                   </div>
-
-                  {/* Author */}
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900 dark:to-secondary-900 flex items-center justify-center text-2xl">
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-foreground">{testimonial.name}</div>
-                      <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                    </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {testimonial.profession}
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {testimonial.location}
+                  </div>
+                </div>
+              </div>
+
+              {/* Language Badge */}
+              <div className="mt-4">
+                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-200">
+                  {testimonial.language}
+                </span>
+              </div>
+            </Card>
           ))}
         </div>
 
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          viewport={{ once: true }}
-          className="mt-16 text-center"
-        >
-          <div className="bg-gradient-to-r from-primary-500 to-secondary-500 rounded-2xl p-8 text-white">
-            <h3 className="text-2xl font-bold mb-4">
-              Ready to Join Our Success Stories?
-            </h3>
-            <p className="text-lg mb-6 opacity-90">
-              Start your health transformation today with a 14-day free trial
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
-                Start Free Trial
-              </button>
-              <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition-colors duration-200">
-                View More Stories
-              </button>
-            </div>
+        {/* Stats */}
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-4xl font-bold text-blue-600 mb-2">50K+</div>
+            <div className="text-gray-600 dark:text-gray-300">Active Users</div>
           </div>
-        </motion.div>
+          <div>
+            <div className="text-4xl font-bold text-green-600 mb-2">4.9</div>
+            <div className="text-gray-600 dark:text-gray-300">Average Rating</div>
+          </div>
+          <div>
+            <div className="text-4xl font-bold text-purple-600 mb-2">25+</div>
+            <div className="text-gray-600 dark:text-gray-300">Countries</div>
+          </div>
+        </div>
       </div>
     </section>
   );
